@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#5b67f1">
+<title>习惯打卡 · 金币规则</title>
+<style>
+  :root{
+    --ink:#313a52; --sub:#97a0b3; --line:#eef0f6;
+    --card:#ffffff;
+    --brand1:#5b67f1; --brand2:#8f5bf5; --brand3:#b55bf0;
+    --gold1:#f6b73c; --gold-ink:#8a5200; --gold-ink2:#a05f00;
+    --danger:#f04a5a;
+    --r:20px;
+    --shadow:0 12px 30px rgba(84,96,180,.10);
+    --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%; margin:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    background:radial-gradient(1200px 700px at 20% -10%,#e3ecff,transparent),
+               radial-gradient(1000px 600px at 110% 110%,#fff1dc,transparent),
+               #e9edf5;
+    color:var(--ink);
+    display:flex; justify-content:center; overflow:hidden;
+  }
+  button{font:inherit; cursor:pointer;}
+  .hidden{display:none !important;}
+
+  .phone{position:relative; width:100%; max-width:430px; height:100dvh; overflow:hidden;
+    background:linear-gradient(180deg,#f2f5fd 0%,#f6faf7 40%,#fdf9f0 100%);
+    box-shadow:0 0 60px rgba(70,80,140,.18); display:flex; flex-direction:column;}
+  @media(min-width:480px){ .phone{border-radius:34px; height:min(100dvh,900px); margin:14px 0;} }
+  .view{position:absolute; top:0; left:0; right:0; bottom:0; overflow-y:auto; overscroll-behavior:contain;
+    padding:0 18px calc(96px + var(--safe-b)); scrollbar-width:none;}
+  .view::-webkit-scrollbar{display:none;}
+
+  /* ===== hero ===== */
+  .hero{position:relative; overflow:hidden; margin:14px 0 6px; border-radius:26px; padding:18px 18px 15px; color:#fff;
+    background:linear-gradient(135deg,var(--brand1) 0%,var(--brand2) 58%,var(--brand3) 115%);
+    box-shadow:0 14px 30px rgba(99,102,241,.35);}
+  .hero::before,.hero::after{content:""; position:absolute; border-radius:50%; pointer-events:none;}
+  .hero::before{width:200px;height:200px; right:-70px; top:-80px; background:rgba(255,255,255,.14);}
+  .hero::after{width:130px;height:130px; left:-50px; bottom:-60px; background:rgba(255,255,255,.10);}
+  .hero-top{position:relative; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .hero .date{font-size:13px; opacity:.85; margin:0 0 5px; letter-spacing:.4px;}
+  .hero h1{margin:0; font-size:25px; line-height:1.2;}
+  .hring{position:relative; width:76px; height:76px; flex:none;}
+  .hring svg{transform:rotate(-90deg);}
+  .hring .bg{fill:none; stroke:rgba(255,255,255,.28); stroke-width:8;}
+  .hring .fg{fill:none; stroke:url(#hg); stroke-width:8; stroke-linecap:round;
+    stroke-dasharray:251.2; stroke-dashoffset:251.2; transition:stroke-dashoffset .6s cubic-bezier(.4,0,.2,1);}
+  .hring .n{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column;}
+  .hring .n b{font-size:23px; line-height:1;}
+  .hring .n span{font-size:11px; opacity:.9; margin-top:2px;}
+  .hero-bottom{position:relative; margin-top:13px; display:flex; align-items:center; gap:10px;}
+  .wallet{display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:99px; flex:none;
+    background:linear-gradient(135deg,#fff2c8,#ffe0a0); color:#8a5200; box-shadow:0 6px 14px rgba(180,120,20,.22);}
+  .wallet .w-info{display:flex; flex-direction:column; line-height:1.2; font-size:9.5px; font-weight:700; opacity:.9; text-align:left;}
+  .wallet .w-amt{font-size:19px; font-weight:800; color:#c07a00;}
+  .wallet .w-amt .cur{font-size:10px; font-weight:700; margin-left:1px;}
+  .wallet.bump{animation:bump .45s cubic-bezier(.4,0,.2,1);}
+  .wallet.drop{animation:drop .45s cubic-bezier(.4,0,.2,1);}
+  @keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.14)}100%{transform:scale(1)}}
+  @keyframes drop{0%{transform:scale(1)}40%{transform:scale(.9)}100%{transform:scale(1)}}
+  .hpct{flex:1; min-width:0;}
+  .hpct .t{font-size:12px; opacity:.92; margin-bottom:6px;}
+  .hpct .bar{height:7px; border-radius:99px; background:rgba(255,255,255,.28); overflow:hidden;}
+  .hpct .bar i{display:block; height:100%; width:0%; border-radius:99px; background:#fff;
+    transition:width .5s cubic-bezier(.4,0,.2,1);}
+  .rule-line{position:relative; margin-top:12px; font-size:11px; line-height:1.55; color:#fff;
+    background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.25); border-radius:12px; padding:7px 10px;}
+  .rule-line b{color:#ffe9a8;}
+
+  /* section */
+  .sec{display:flex; justify-content:space-between; align-items:center; margin:18px 4px 10px;}
+  .sec h2{margin:0; font-size:17px;}
+  .sec .sub{font-size:12px; color:var(--sub); margin-top:2px;}
+  .sec-actions{display:flex; gap:8px;}
+  .mini-btn{border:none; background:var(--card); color:#6d78ff; font-size:12px; font-weight:700;
+    padding:7px 12px; border-radius:99px; box-shadow:0 4px 12px rgba(80,90,180,.08); transition:.2s;}
+  .mini-btn:active{transform:scale(.95);}
+  .mini-btn.danger{color:var(--danger);}
+
+  .list{background:var(--card); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; padding:4px 0;}
+  .habit{position:relative; display:flex; align-items:center; gap:12px; padding:11px 14px;}
+  .habit+.habit{border-top:1px solid var(--line);}
+  .hicon{width:42px; height:42px; border-radius:15px; flex:none; font-size:21px; display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--c1) 16%,#fff),color-mix(in srgb,var(--c2) 20%,#fff));}
+  .hmeta{flex:1; min-width:0;}
+  .hname{font-size:15.5px; font-weight:600; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .hsub{font-size:11.5px; color:var(--sub); margin:3px 0 0;}
+  .hsub b{color:var(--gold-ink2);}
+  .habit.on .hname{color:#9aa1b2;}
+  .habit.on .hsub b{color:#37b26c;}
+  .hdel{display:none; flex:none; width:32px; height:32px; border-radius:50%; border:1.5px solid #ffd4da;
+    background:#fff; color:var(--danger); font-size:15px; font-weight:700; align-items:center; justify-content:center; transition:.2s;}
+  .list.editing .hdel{display:flex;}
+  .hdel:active{transform:scale(.9);}
+  .habit.arm .hdel{background:var(--danger); color:#fff; border-color:var(--danger);}
+  .check{flex:none; width:32px; height:32px; border-radius:50%; padding:0; border:none;
+    background:#eef1f8; color:#fff; display:flex; align-items:center; justify-content:center; transition:transform .18s, background .25s, box-shadow .25s;}
+  .check svg{width:15px; height:15px; stroke:currentColor; stroke-width:3.6; fill:none;
+    stroke-linecap:round; stroke-linejoin:round; opacity:0; transform:scale(.5); transition:.2s;}
+  .habit.on .check{background:linear-gradient(135deg,var(--c1),var(--c2));
+    box-shadow:0 5px 12px color-mix(in srgb,var(--c2) 45%,transparent);}
+  .habit.on .check svg{opacity:1; transform:scale(1);}
+  .check:active{transform:scale(.86);}
+  .plus1{position:absolute; right:64px; top:4px; font-size:19px; font-weight:800; color:#21b968;
+    pointer-events:none; z-index:5; text-shadow:0 1px 0 #fff; animation:floatUp .8s ease-out forwards;}
+  @keyframes floatUp{0%{opacity:0; transform:translateY(6px) scale(.5);}25%{opacity:1; transform:translateY(-4px) scale(1.18);}
+    100%{opacity:0; transform:translateY(-24px) scale(1);}}
+  .empty{display:none; text-align:center; color:var(--sub); padding:38px 16px;}
+  .empty .big{font-size:38px; margin-bottom:8px;}
+  .list.empty-state .empty{display:block;}
+
+  .add-panel{display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; padding:12px;
+    background:var(--card); border-radius:var(--r); box-shadow:var(--shadow);}
+  .add-panel input{flex:1 1 200px; min-width:0; border:none; outline:none; background:#f4f6fb;
+    border-radius:13px; padding:11px 14px; font:inherit; font-size:14px; color:var(--ink);}
+  .add-panel input::placeholder{color:#b3bac9;}
+  .ap-btns{display:flex; gap:8px;}
+  .ap-btns button{border:none; border-radius:13px; font-size:13px; font-weight:700; padding:0 18px;}
+  .ap-btns .save{background:linear-gradient(135deg,var(--brand1),var(--brand2)); color:#fff;}
+  .ap-btns .plain{background:#f1f3fa; color:var(--sub);}
+  .ap-tip{flex-basis:100%; font-size:11px; color:#b3bac9;}
+
+  /* ===== 统计 ===== */
+  .v-head{display:flex; justify-content:space-between; align-items:center; margin:18px 4px 14px;}
+  .v-head h2{margin:0; font-size:21px;}
+  .mini-chip{font-size:12px; color:var(--sub); background:#fff; border-radius:99px; padding:7px 13px;
+    box-shadow:0 4px 12px rgba(80,90,180,.08);}
+  .mini-chip b{color:var(--brand1);}
+
+  .stat-total{background:linear-gradient(150deg,#fff6df,#ffe9bd); border:1px solid #f5dc9f;
+    border-radius:var(--r); padding:15px 18px; box-shadow:var(--shadow);}
+  .stat-total .l1{font-size:12px; color:#a9772a; font-weight:700; margin:0;}
+  .stat-total .l2{margin:3px 0 2px; font-size:32px; font-weight:800; color:#8a5200; line-height:1.15;}
+  .stat-total .l2 .u{font-size:13px; font-weight:700; color:#c08a2e; margin-left:3px;}
+  .stat-total .t-grid{display:flex; gap:8px; margin:8px 0 2px;}
+  .stat-total .t-grid div{flex:1; background:rgba(255,255,255,.72); border-radius:12px; padding:7px 10px;
+    font-size:11px; color:#a9772a;}
+  .stat-total .t-grid b{display:block; font-size:15px; color:#8a5200; margin-top:2px;}
+  .stat-total .t-grid .minus b{color:var(--danger);}
+  .stat-total .l3{font-size:12px; color:#a9772a; margin:6px 0 0;}
+  .stat-total .l3 b{color:#b45309;}
+
+  .month-card{margin-top:14px; background:var(--card); border-radius:var(--r); padding:14px; box-shadow:var(--shadow);}
+  .mhead{display:flex; align-items:center; justify-content:space-between; gap:6px;}
+  .mv{display:flex; gap:6px;}
+  .mv button{width:32px; height:32px; border:none; border-radius:10px; background:#f1f3fa; color:var(--ink); font-size:18px; line-height:1;}
+  .mv button:active{transform:scale(.92);}
+  .mtitle{text-align:center;}
+  .mtitle b{display:block; font-size:16px;}
+  .mtitle span{font-size:10.5px; color:var(--sub);}
+  #calToday{font-size:11px; font-weight:700; color:#6d78ff; border:none; background:#eef0ff; border-radius:99px; padding:6px 10px;}
+  .chips{display:flex; gap:8px; margin:12px 0 10px;}
+  .chips span{flex:1; text-align:center; background:#f7f8fc; border-radius:12px; padding:8px 2px; font-size:11px; color:var(--sub);}
+  .chips b{display:block; font-size:15px; color:var(--ink); margin-top:2px;}
+  .chips .gold{background:linear-gradient(150deg,#fff6df,#ffedc4);}
+  .chips .gold b{color:#c07f10;}
+  .chips .red{background:#fff0f1;}
+  .chips .red b{color:var(--danger);}
+  .wk,.grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px;}
+  .wk span{text-align:center; font-size:10.5px; color:#aab2c2; font-weight:700; padding:2px 0;}
+  .cal-cell{min-height:40px; border-radius:12px; background:#f6f8fc; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:1px;}
+  .cal-cell .d{font-size:12.5px; font-weight:700; color:#8d96aa; line-height:1.2;}
+  .cal-cell .pills{display:flex; gap:2px; flex-wrap:wrap; justify-content:center;}
+  .cal-cell .cnt{font-size:9px; font-weight:800; line-height:1.5; border-radius:99px; padding:0 5px; min-width:17px; text-align:center;}
+  .cal-cell .cnt.up{color:#9a6a0e; background:linear-gradient(135deg,#ffe9b0,#ffd46b);}
+  .cal-cell .cnt.down{color:#fff; background:var(--danger);}
+  .cal-cell.done{background:linear-gradient(150deg,#fff7e0,#ffedbe);}
+  .cal-cell.done .d{color:#9a6a0e;}
+  .cal-cell.missed{background:linear-gradient(150deg,#fff0f1,#ffe3e6);}
+  .cal-cell.missed .d{color:#c23a4a;}
+  .cal-cell.today{box-shadow:0 0 0 2px var(--brand2);}
+  .cal-cell.today.done{box-shadow:0 0 0 2px var(--gold1);}
+  .cal-cell.today.missed{box-shadow:0 0 0 2px var(--danger);}
+  .cal-cell.today .d{color:var(--brand1); font-size:14px;}
+  .cal-cell.today.done .d{color:#9a6a0e;}
+  .cal-cell.today.missed .d{color:#c23a4a;}
+  .cal-cell.future{opacity:.45;}
+  .cal-cell.blank{background:transparent;}
+  .cal-foot{margin-top:10px; font-size:10.5px; color:#b3bac9; text-align:center; line-height:1.7;}
+
+  .tabbar{position:absolute; left:0; right:0; bottom:0; z-index:20; display:flex; gap:10px;
+    padding:10px 18px calc(10px + var(--safe-b));
+    background:rgba(255,255,255,.86); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border-top:1px solid rgba(220,225,238,.9);}
+  .tab{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; border:none; background:transparent;
+    color:#a3aab9; font-size:11px; font-weight:600; padding:6px 0; border-radius:14px; transition:.2s;}
+  .tab .t-ic{font-size:20px; line-height:1; filter:grayscale(1) opacity(.7); transition:.2s;}
+  .tab.active{color:#5b67f1;}
+  .tab.active .t-ic{filter:none;}
+  .tab.active::after{content:""; width:20px; height:3px; border-radius:99px;
+    background:linear-gradient(90deg,var(--brand1),var(--brand2)); margin-top:1px;}
+
+  .toast{position:fixed; left:50%; top:15%; transform:translateX(-50%) scale(.7); z-index:99; max-width:88vw;
+    background:linear-gradient(135deg,#fff7dd,#ffe9ae); border:1.5px solid #f0cd79; color:#8a5a06;
+    font-size:16px; font-weight:800; padding:11px 20px; border-radius:99px;
+    box-shadow:0 12px 30px rgba(233,162,59,.45); pointer-events:none; display:flex; align-items:center; gap:7px;
+    opacity:0; text-align:center;}
+  .toast b{color:#e08900;}
+  .toast.lose{background:linear-gradient(135deg,#fff0f0,#ffe0e2); border-color:#f3b0b8; color:#b32433;}
+  .toast.lose b{color:#e02b3f;}
+  .toast.show{animation:toastIn .4s cubic-bezier(.34,1.56,.64,1) forwards;}
+  @keyframes toastIn{0%{opacity:0; transform:translateX(-50%) scale(.45);}
+    60%{opacity:1; transform:translateX(-50%) scale(1.1);}100%{opacity:1; transform:translateX(-50%) scale(1);}}
+  .particle{position:fixed; width:11px; height:11px; border-radius:50%; pointer-events:none; z-index:99;
+    background:radial-gradient(circle at 30% 30%,#ffe89a,#f6b73c 70%); box-shadow:0 0 8px rgba(246,183,60,.85);
+    animation:burst .75s cubic-bezier(.2,.6,.4,1) forwards;}
+  @keyframes burst{to{transform:translate(var(--dx),var(--dy)) scale(.4); opacity:0;}}
+</style>
+</head>
+<body>
+<div class="phone">
+  <svg width="0" height="0" style="position:absolute"><defs>
+    <linearGradient id="hg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d8d4ff"/>
+    </linearGradient>
+  </defs></svg>
+
+  <!-- ======== 今日 ======== -->
+  <main class="view" id="viewToday">
+    <header class="hero">
+      <div class="hero-top">
+        <div>
+          <p class="date" id="dateLine"></p>
+          <h1 id="greet"></h1>
+        </div>
+        <div class="hring">
+          <svg width="76" height="76" viewBox="0 0 100 100">
+            <circle class="bg" cx="50" cy="50" r="40"/>
+            <circle class="fg" id="ringFg" cx="50" cy="50" r="40"/>
+          </svg>
+          <div class="n"><b id="doneNum">0</b><span>/<b id="totalNum">0</b></span></div>
+        </div>
+      </div>
+      <div class="hero-bottom">
+        <div class="wallet" id="wallet">
+          <span style="font-size:20px">💰</span>
+          <div class="w-info"><span>余额</span><span class="w-amt"><span id="balanceMoney">0</span><span class="cur">RMB</span></span></div>
+        </div>
+        <div class="hpct">
+          <div class="t" id="hpctText">今日进度 0/0</div>
+          <div class="bar"><i id="barFill"></i></div>
+        </div>
+      </div>
+      <div class="rule-line">规则：完成 1 项 <b>+1000 RMB</b>；当天没做完的，隔天 0 点自动结算，<b>每项扣 1000</b>（余额最低为 0）</div>
+    </header>
+
+    <div class="sec">
+      <div><h2>我的习惯</h2><div class="sub" id="todaySub">打勾入账，未完成会扣款</div></div>
+      <div class="sec-actions">
+        <button class="mini-btn" id="editBtn">管理</button>
+        <button class="mini-btn" id="addBtn">＋ 新建</button>
+      </div>
+    </div>
+
+    <div class="list" id="list">
+      <div class="empty"><div class="big">🌱</div>还没有习惯<br>点右上角「＋ 新建」添加吧</div>
+    </div>
+
+    <div class="add-panel hidden" id="addPanel">
+      <input id="name" maxlength="20" placeholder="新习惯，如：睡前不玩手机" autocomplete="off">
+      <div class="ap-btns">
+        <button class="save" id="btnAdd">保存</button>
+        <button class="plain" id="cancelAdd">取消</button>
+      </div>
+      <div class="ap-tip">每完成一次 +1000 RMB，未完成隔天扣款</div>
+    </div>
+  </main>
+
+  <!-- ======== 统计 ======== -->
+  <section class="view hidden" id="viewStat">
+    <div class="v-head">
+      <h2>📊 统计</h2>
+      <span class="mini-chip" id="todayChip">今日 <b>0</b> 项</span>
+    </div>
+
+    <div class="stat-total">
+      <p class="l1">💰 金币余额</p>
+      <p class="l2"><b id="balanceBig">0</b><span class="u">RMB</span></p>
+      <div class="t-grid">
+        <div>累计收入<b id="earnMoney">+0</b></div>
+        <div class="minus">累计扣款<b id="lostMoney">-0</b></div>
+      </div>
+      <p class="l3">坚持打卡 <b id="allDays">0</b> 天 · 完成 <b id="allChecks">0</b> 次</p>
+    </div>
+
+    <div class="month-card">
+      <div class="mhead">
+        <div class="mv">
+          <button id="calPrev" aria-label="上个月">‹</button>
+          <button id="calNext" aria-label="下个月">›</button>
+        </div>
+        <div class="mtitle"><b id="calTitle">—</b><span id="calRange"></span></div>
+        <button id="calToday">回本月</button>
+      </div>
+      <div class="chips">
+        <span>本月完成<b id="calChecks">0</b>次</span>
+        <span class="red">未完成<b id="calMiss">0</b>项</span>
+        <span class="gold">本月净额<b id="calNet">+0</b></span>
+      </div>
+      <div class="wk"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+      <div class="grid" id="calGrid"></div>
+      <div class="cal-foot">金色 <b>+n</b> = 完成 n 项（入账）· 红色 <b>-n</b> = 未完成被扣款 n 项<br>每天 0 点自动结算前一天</div>
+    </div>
+  </section>
+
+  <nav class="tabbar">
+    <button class="tab active" data-tab="today"><span class="t-ic">✅</span><span>今日</span></button>
+    <button class="tab" data-tab="stat"><span class="t-ic">📅</span><span>统计</span></button>
+  </nav>
+</div>
+<script>
+(function(){
+  const $=s=>document.querySelector(s);
+  const K_HABITS='habit.habits.v1', K_DONE='habit.done.v1', K_PRICE='habit.price.v1';
+  const K_MISS='habit.miss.v1', K_DAYH='habit.dayset.v1', K_EPOCH='habit.epoch.v1', K_FLAG='habit.ui.v2';
+  const DEFAULT_PRICE=1000;
+  const CIRC=251.2;
+  const pad=n=>String(n).padStart(2,'0');
+  const todayKey=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());};
+  const keyOf=(y,m,d)=>y+'-'+pad(m)+'-'+pad(d);
+  let KEY=todayKey();
+
+  const load=(k,f)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??f;}catch(e){return f;}};
+  const save=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+  const getHabits=()=>load(K_HABITS,[]);
+  const getDone=()=>load(K_DONE,{});
+  const getMissed=()=>load(K_MISS,{});
+  const getDayH=()=>load(K_DAYH,{});
+  const getPrice=()=>load(K_PRICE,DEFAULT_PRICE);
+  const saveDone=d=>save(K_DONE,d);
+  const saveHabits=h=>save(K_HABITS,h);
+  const saveMissed=m=>save(K_MISS,m);
+  const saveDayH=d=>save(K_DAYH,d);
+  const fmtMoney=n=>Math.max(0,n).toLocaleString('en-US');
+  const dayCount=o=>Object.keys(o||{}).length;
+
+  /* ---------- 预设习惯 ---------- */
+  const PALETTE=[
+    {icon:'🌅',c1:'#f59e0b',c2:'#f97316'},
+    {icon:'🍚',c1:'#22c55e',c2:'#84cc16'},
+    {icon:'😴',c1:'#6366f1',c2:'#8b5cf6'},
+    {icon:'🏃',c1:'#ef4444',c2:'#f97316'},
+    {icon:'🤖',c1:'#3b82f6',c2:'#06b6d4'},
+    {icon:'🛠️',c1:'#8b5cf6',c2:'#d946ef'},
+    {icon:'💡',c1:'#14b8a6',c2:'#0ea5e9'}
+  ];
+  const DEFAULT_HABITS=[
+    '按时早起','按时吃饭','按时睡觉','按时运动','按时学习AI','做一个小项目','多学会一个知识'
+  ].map((name,i)=>({id:'s'+(i+1),name,icon:PALETTE[i].icon,c1:PALETTE[i].c1,c2:PALETTE[i].c2}));
+
+  function metaForName(name){
+    const n=name;
+    if(n.includes('早')) return PALETTE[0];
+    if(n.includes('饭')||n.includes('吃')) return PALETTE[1];
+    if(n.includes('睡')) return PALETTE[2];
+    if(n.includes('运动')||n.includes('跑')||n.includes('锻炼')) return PALETTE[3];
+    if(/ai/i.test(n)) return PALETTE[4];
+    if(n.includes('项目')) return PALETTE[5];
+    if(n.includes('知识')||n.includes('学会')||n.includes('学习')) return PALETTE[6];
+    return PALETTE[Math.floor(Math.random()*PALETTE.length)];
+  }
+
+  /* ---------- 一次性迁移：默认 7 项（保留历史收入；从今天起启用扣款规则） ---------- */
+  function migrate(){
+    if(!load(K_FLAG,false)){
+      const done=getDone();
+      done[KEY]={};
+      const habits=DEFAULT_HABITS.map(h=>({id:h.id,name:h.name,icon:h.icon,c1:h.c1,c2:h.c2}));
+      saveDone(done); saveHabits(habits); save(K_FLAG,true);
+    }
+    if(!load(K_EPOCH,null)) save(K_EPOCH,KEY);
+  }
+
+  /* ---------- 日期工具 ---------- */
+  function addDays(key,delta){
+    const p=key.split('-').map(Number);
+    const d=new Date(p[0],p[1]-1,p[2]+delta);
+    return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  }
+  function eachDay(a,b,fn){
+    let cur=a, guard=0;
+    while(cur<=b&&guard<5000){ fn(cur); cur=addDays(cur,1); guard++; }
+  }
+
+  /* 快照：每天记录当天有哪些习惯，用于隔天结算扣款 */
+  function snapshotToday(){
+    const dayH=getDayH();
+    dayH[KEY]=getHabits().map(h=>h.id);
+    saveDayH(dayH);
+  }
+
+  /* ---------- 结算：把过去未结算的日期扣款 ---------- */
+  function settlePast(){
+    const done=getDone(), dayH=getDayH(), habits=getHabits(), price=getPrice();
+    const epoch=load(K_EPOCH,KEY)||KEY;
+    const yesterday=addDays(KEY,-1);
+    if(yesterday<epoch) return 0;
+    const missed=getMissed();
+    let totalLost=0, totalMiss=0, settledDays=0;
+    eachDay(epoch,yesterday,D=>{
+      if(missed[D]!==undefined) return;
+      if(!(dayH[D]||done[D])) return;   // 那天没打开过，不追溯
+      const ids=dayH[D]||habits.map(h=>h.id);
+      const set=done[D]||{};
+      const m=ids.filter(id=>!set[id]).length;
+      if(m===0){ missed[D]={m:0,lost:0}; settledDays++; return; }
+      let earned=0, lostBefore=0;
+      Object.keys(done).forEach(k=>{ if(k<=D) earned+=dayCount(done[k])*price; });
+      Object.keys(missed).forEach(k=>{ if(k<=D){ const v=missed[k]; lostBefore+=(v&&typeof v==='object'?v.lost:v); } });
+      const bal=Math.max(0,earned-lostBefore);
+      const lost=Math.min(m*price,bal);
+      missed[D]={m,lost};
+      totalLost+=lost; totalMiss+=m; settledDays++;
+    });
+    saveMissed(missed);
+    if(totalLost>0){
+      const t=document.createElement('div');
+      t.className='toast lose'; t.id='toast-settle';
+      t.innerHTML='⚠️ 有 <b>'+totalMiss+'</b> 项未完成打卡，已按规则扣款 <b>'+fmtMoney(totalLost)+'</b> RMB（0 点自动结算）';
+      document.body.appendChild(t);
+      t.classList.add('show');
+      setTimeout(()=>t.remove(),3400);
+    }
+    return totalLost;
+  }
+
+  /* ---------- 汇总 ---------- */
+  function totals(){
+    const done=getDone(), missed=getMissed(), price=getPrice();
+    let checks=0, days=0;
+    Object.keys(done).forEach(k=>{ const n=dayCount(done[k]); if(n){checks+=n; days++;} });
+    const earned=checks*price;
+    let lost=0;
+    Object.keys(missed).forEach(k=>{ const v=missed[k]; lost+=(v&&typeof v==='object'?v.lost:v); });
+    return {earned,lost,balance:Math.max(0,earned-lost),checks,days};
+  }
+  function monthTotals(y,m){
+    const done=getDone(), missed=getMissed(), price=getPrice();
+    const dim=new Date(y,m+1,0).getDate();
+    let checks=0,miss=0,lost=0,daysWith=0;
+    for(let d=1;d<=dim;d++){
+      const k=keyOf(y,m+1,d);
+      const n=dayCount(done[k]);
+      const mv=missed[k];
+      if(n){daysWith++;checks+=n;}
+      if(mv&&typeof mv==='object'){miss+=mv.m;lost+=mv.lost;}
+    }
+    return {checks,miss,lost,net:checks*price-lost,daysWith};
+  }
+
+  /* ---------- 今日渲染 ---------- */
+  function renderHeader(){
+    const habits=getHabits(), done=getDone(), price=getPrice();
+    const set=done[KEY]||{};
+    const total=habits.length;
+    const doneCount=habits.filter(h=>set[h.id]).length;
+    const t=totals();
+    $('#doneNum').textContent=doneCount;
+    $('#totalNum').textContent=total;
+    $('#balanceMoney').textContent=fmtMoney(t.balance);
+    $('#hpctText').innerHTML='今日进度 '+doneCount+'/'+total+' · 入账 <b>+'+fmtMoney(doneCount*price)+'</b>';
+    const pct=total?doneCount/total:0;
+    $('#ringFg').style.strokeDashoffset=CIRC*(1-pct);
+    $('#barFill').style.width=(pct*100).toFixed(1)+'%';
+    $('#todayChip').innerHTML='今日 <b>'+doneCount+'</b> 项';
+    const left=total-doneCount;
+    $('#todaySub').textContent=left>0?('还有 '+left+' 项未完成，明天会扣 '+fmtMoney(left*price)+' RMB'):'全部完成，今天不会扣款 🎉';
+  }
+  function habitRowHTML(h,set){
+    const on=!!set[h.id];
+    return '<div class="habit'+(on?' on':'')+'" data-id="'+h.id+'" style="--c1:'+h.c1+';--c2:'+h.c2+'">'
+      +'<div class="hicon">'+h.icon+'</div>'
+      +'<div class="hmeta"><p class="hname">'+h.name+'</p>'
+      +'<p class="hsub">'+(on?'<b>今日已完成</b> · 入账 +1000':'点击打勾 +1000 · 未完成会扣款')+'</p></div>'
+      +'<button class="hdel" aria-label="删除 '+h.name+'">✕</button>'
+      +'<button class="check" aria-label="'+(on?'取消':'完成')+'打卡 '+h.name+'"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></button>'
+      +'</div>';
+  }
+  function renderHabits(){
+    const habits=getHabits(), done=getDone();
+    const list=$('#list');
+    list.classList.toggle('empty-state',habits.length===0);
+    list.innerHTML=habits.map(h=>habitRowHTML(h,done[KEY]||{})).join('');
+    renderHeader();
+  }
+
+  /* ---------- 统计渲染 ---------- */
+  const now=new Date();
+  let viewY=now.getFullYear(), viewM=now.getMonth();
+  function renderStats(){
+    const t=totals();
+    $('#balanceBig').textContent=fmtMoney(t.balance);
+    $('#earnMoney').textContent='+'+fmtMoney(t.earned);
+    $('#lostMoney').textContent='-'+fmtMoney(t.lost);
+    $('#allDays').textContent=t.days;
+    $('#allChecks').textContent=t.checks;
+  }
+  function renderCalendar(){
+    const done=getDone(), missed=getMissed();
+    const y=viewY, m=viewM;
+    const grid=$('#calGrid');
+    grid.innerHTML='';
+    const firstDow=(new Date(y,m,1).getDay()+6)%7;
+    const dim=new Date(y,m+1,0).getDate();
+    const t=new Date();
+    const isCur=t.getFullYear()===y&&t.getMonth()===m;
+    const mt=monthTotals(y,m);
+    for(let i=0;i<firstDow;i++){
+      const b=document.createElement('div'); b.className='cal-cell blank'; grid.appendChild(b);
+    }
+    for(let d=1;d<=dim;d++){
+      const k=keyOf(y,m+1,d);
+      const set=done[k]||{};
+      const n=dayCount(set);
+      const mv=missed[k];
+      const ml=(mv&&typeof mv==='object')?mv.m:0;
+      const cell=document.createElement('div');
+      cell.className='cal-cell';
+      if(n>0) cell.classList.add('done');
+      if(ml>0) cell.classList.add('missed');
+      if(isCur&&d===t.getDate()) cell.classList.add('today');
+      if(isCur&&d>t.getDate()) cell.classList.add('future');
+      const dn=document.createElement('span'); dn.className='d'; dn.textContent=d;
+      cell.appendChild(dn);
+      const pills=document.createElement('span'); pills.className='pills';
+      if(n>0){
+        const up=document.createElement('span'); up.className='cnt up'; up.textContent='+'+n;
+        up.title=d+'日完成 '+n+' 项，入账 '+fmtMoney(n*1000)+' RMB';
+        pills.appendChild(up);
+      }
+      if(ml>0){
+        const down=document.createElement('span'); down.className='cnt down'; down.textContent='-'+ml;
+        down.title=d+'日有 '+ml+' 项未完成，扣款 '+fmtMoney((mv&&typeof mv==='object')?mv.lost:0)+' RMB';
+        pills.appendChild(down);
+      }
+      if(pills.childNodes.length) cell.appendChild(pills);
+      grid.appendChild(cell);
+    }
+    $('#calTitle').textContent=y+'年'+(m+1)+'月';
+    $('#calRange').textContent=isCur?'（本月）':'';
+    $('#calChecks').textContent=mt.checks;
+    $('#calMiss').textContent=mt.miss;
+    $('#calNet').textContent=(mt.net>=0?'+':'')+fmtMoney(Math.max(0,mt.net));
+    $('#calNet').style.color=mt.net<0?'var(--danger)':'';
+    $('#calToday').style.visibility=isCur?'hidden':'visible';
+    renderStats();
+  }
+  $('#calPrev').addEventListener('click',()=>{viewM--; if(viewM<0){viewM=11;viewY--;} renderCalendar();});
+  $('#calNext').addEventListener('click',()=>{viewM++; if(viewM>11){viewM=0;viewY++;} renderCalendar();});
+  $('#calToday').addEventListener('click',()=>{const d=new Date(); viewY=d.getFullYear(); viewM=d.getMonth(); renderCalendar();});
+
+  /* ---------- 动效 ---------- */
+  let audioCtx=null;
+  function playCoin(){
+    try{
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC) return;
+      audioCtx=audioCtx||new AC();
+      if(audioCtx.state==='suspended') audioCtx.resume();
+      const ctx=audioCtx, t0=ctx.currentTime+0.01;
+      const notes=[1318.5,1567.98,1760,2093,2637];
+      notes.forEach((f,i)=>{
+        const t=t0+i*0.075;
+        const osc=ctx.createOscillator(), g=ctx.createGain();
+        osc.type='triangle'; osc.frequency.value=f;
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(0.15,t+0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.22);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t); osc.stop(t+0.3);
+        const o2=ctx.createOscillator(), g2=ctx.createGain();
+        o2.type='sine'; o2.frequency.value=f*2;
+        g2.gain.setValueAtTime(0.0001,t);
+        g2.gain.exponentialRampToValueAtTime(0.065,t+0.01);
+        g2.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
+        o2.connect(g2); g2.connect(ctx.destination);
+        o2.start(t); o2.stop(t+0.25);
+      });
+    }catch(e){}
+  }
+  let toastTimer=null;
+  function showToast(html,cls,dur){
+    let t=document.getElementById('toast');
+    if(!t){t=document.createElement('div'); t.id='toast'; t.className='toast'; document.body.appendChild(t);}
+    t.innerHTML=html;
+    t.classList.remove('lose'); if(cls) t.classList.add(cls);
+    t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer=setTimeout(()=>t.classList.remove('show'),dur||1700);
+  }
+  function burstCoins(x,y){
+    for(let i=0;i<10;i++){
+      const p=document.createElement('span'); p.className='particle';
+      const ang=Math.random()*Math.PI*2, dist=46+Math.random()*58;
+      p.style.left=(x-5)+'px'; p.style.top=(y-5)+'px';
+      p.style.setProperty('--dx',Math.cos(ang)*dist+'px');
+      p.style.setProperty('--dy',(Math.sin(ang)*dist-28)+'px');
+      p.style.animationDelay=(Math.random()*0.05)+'s';
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),900);
+    }
+  }
+  function celebrateCheck(newRow,cx,cy){
+    if(newRow){
+      const f=document.createElement('span'); f.className='plus1'; f.textContent='+1';
+      newRow.appendChild(f); setTimeout(()=>f.remove(),820);
+    }
+    if(!cx&&newRow){
+      const b=newRow.querySelector('.check');
+      if(b){const r=b.getBoundingClientRect(); cx=r.left+r.width/2; cy=r.top+r.height/2;}
+    }
+    if(cx) burstCoins(cx,cy);
+    const w=$('#wallet'); w.classList.remove('bump'); void w.offsetWidth; w.classList.add('bump');
+    playCoin();
+    showToast('💰 今天又增加 <b>1000</b> RMB');
+  }
+
+  /* ---------- 交互 ---------- */
+  let editMode=false, delArmed=null;
+  function refreshAll(){ renderHabits(); renderStats(); }
+  function touchSnapshot(){
+    const dayH=getDayH();
+    dayH[KEY]=getHabits().map(h=>h.id);
+    saveDayH(dayH);
+  }
+  $('#editBtn').addEventListener('click',()=>{
+    editMode=!editMode; delArmed=null;
+    $('#list').classList.toggle('editing',editMode);
+    $('#editBtn').textContent=editMode?'完成':'管理';
+    $('#editBtn').classList.toggle('danger',editMode);
+    if(editMode) showToast('点 ✕ 删除习惯（历史一并清除）',null,2000);
+  });
+  $('#addBtn').addEventListener('click',()=>{ $('#addPanel').classList.remove('hidden'); $('#name').focus(); });
+  $('#cancelAdd').addEventListener('click',()=>{ $('#addPanel').classList.add('hidden'); $('#name').value=''; });
+
+  $('#list').addEventListener('click',e=>{
+    const row=e.target.closest('.habit'); if(!row) return;
+    const id=row.dataset.id;
+    const done=getDone();
+    const set=done[KEY]||(done[KEY]={});
+    if(e.target.closest('.hdel')){
+      if(delArmed!==id){
+        delArmed=id;
+        document.querySelectorAll('.habit.arm').forEach(el=>el.classList.remove('arm'));
+        row.classList.add('arm');
+        showToast('再点一次确认删除',null,1800);
+        setTimeout(()=>{ if(delArmed===id){delArmed=null; row.classList.remove('arm');} },2400);
+        return;
+      }
+      delArmed=null;
+      let habits=getHabits();
+      habits=habits.filter(h=>h.id!==id);
+      Object.keys(done).forEach(k=>delete done[k][id]);
+      const dayH=getDayH();
+      Object.keys(dayH).forEach(k=>{ dayH[k]=(dayH[k]||[]).filter(x=>x!==id); });
+      saveHabits(habits); saveDone(done); saveDayH(dayH);
+      refreshAll(); renderCalendar();
+      showToast('已删除习惯');
+      return;
+    }
+    if(e.target.closest('.check')){
+      const habits=getHabits();
+      const wasDone=!!set[id];
+      let cx=0,cy=0;
+      if(!wasDone){
+        const b=row.querySelector('.check').getBoundingClientRect();
+        cx=b.left+b.width/2; cy=b.top+b.height/2;
+      }
+      if(wasDone) delete set[id]; else set[id]=true;
+      saveDone(done);
+      refreshAll(); renderCalendar();
+      if(!wasDone){
+        celebrateCheck($('#list').querySelector('.habit[data-id="'+id+'"]'),cx,cy);
+        const pct=habits.length?habits.filter(h=>set[h.id]).length/habits.length:0;
+        if(pct===1){
+          $('#greet').textContent='🎉 全部完成！';
+          setTimeout(()=>{ if(!document.hidden) $('#greet').textContent=greetText(); },2400);
+        }
+      }else{
+        const w=$('#wallet'); w.classList.remove('drop'); void w.offsetWidth; w.classList.add('drop');
+        showToast('已取消，今天少赚 1000','lose');
+      }
+    }
+  });
+
+  $('#btnAdd').addEventListener('click',addHabit);
+  $('#name').addEventListener('keydown',e=>{ if(e.key==='Enter') addHabit(); });
+  function addHabit(){
+    const input=$('#name');
+    const name=input.value.trim();
+    if(!name) return;
+    const habits=getHabits(), done=getDone();
+    const meta=metaForName(name);
+    habits.push({id:Date.now()+''+Math.floor(Math.random()*9999),name,icon:meta.icon,c1:meta.c1,c2:meta.c2});
+    saveHabits(habits); saveDone(done);
+    touchSnapshot();
+    input.value=''; $('#addPanel').classList.add('hidden');
+    refreshAll(); renderCalendar();
+    input.blur();
+    showToast('已添加：「'+name+'」');
+  }
+
+  /* 底部导航 */
+  document.querySelectorAll('.tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const stat=btn.dataset.tab==='stat';
+      $('#viewToday').classList.toggle('hidden',stat);
+      $('#viewStat').classList.toggle('hidden',!stat);
+      if(stat) renderCalendar();
+    });
+  });
+
+  /* 时间 / 问候 */
+  function greetText(){
+    const d=new Date(), h=d.getHours();
+    const parts=['🌙 夜深了','🌅 早上好','☀️ 中午好','🌤️ 下午好','🌇 晚上好'];
+    return parts[h<5?0:h<11?1:h<13?2:h<18?3:4]+'，开始打卡吧';
+  }
+  function setClock(){
+    const d=new Date();
+    const wk=['日','一','二','三','四','五','六'][d.getDay()];
+    $('#dateLine').textContent=(d.getMonth()+1)+'月'+d.getDate()+'日 · 星期'+wk;
+    $('#greet').textContent=greetText();
+  }
+
+  /* 启动 */
+  setClock();
+  migrate();
+  snapshotToday();
+  settlePast();
+  refreshAll();
+  renderCalendar();
+
+  /* 跨天自动结算 */
+  setInterval(()=>{
+    const k=todayKey();
+    if(k!==KEY){
+      KEY=k;
+      setClock();
+      snapshotToday();
+      settlePast();
+      refreshAll(); renderCalendar();
+    }
+  },20000);
+})();
+</script>
+</body>
+</html>
+
